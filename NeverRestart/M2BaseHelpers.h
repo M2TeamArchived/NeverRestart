@@ -20,7 +20,6 @@
 
 #include <map>
 #include <string>
-#include <string_view>
 #include <vector>
 
 /**
@@ -636,7 +635,7 @@ CharType M2PathFindFileName(CharType Path)
  * @param UTF8String The UTF-8 string you want to convert.
  * @return A converted UTF-16 string.
  */
-std::wstring M2MakeUTF16String(const std::string_view& UTF8String);
+std::wstring M2MakeUTF16String(const std::string& UTF8String);
 
 /**
  * Converts from the UTF-16 string to the UTF-8 string.
@@ -644,7 +643,7 @@ std::wstring M2MakeUTF16String(const std::string_view& UTF8String);
  * @param UTF16String The UTF-16 string you want to convert.
  * @return A converted UTF-8 string.
  */
-std::string M2MakeUTF8String(const std::wstring_view& UTF16String);
+std::string M2MakeUTF8String(const std::wstring& UTF16String);
 
 /**
  * Retrieves the calling thread's last-error code value. The last-error code is
@@ -727,7 +726,7 @@ std::wstring M2GetCurrentProcessModulePath();
  *         arguments.
  */
 std::vector<std::wstring> M2SpiltCommandLine(
-    const std::wstring_view& CommandLine);
+    const std::wstring& CommandLine);
 
 /**
  * Parses a command line string and get more friendly result.
@@ -743,9 +742,9 @@ std::vector<std::wstring> M2SpiltCommandLine(
  * @param UnresolvedCommandLine The unresolved command line. 
  */
 void M2SpiltCommandLineEx(
-    const std::wstring_view& CommandLine,
-    const std::vector<std::wstring_view>& OptionPrefixes,
-    const std::vector<std::wstring_view>& OptionParameterSeparators,
+    const std::wstring& CommandLine,
+    const std::vector<std::wstring>& OptionPrefixes,
+    const std::vector<std::wstring>& OptionParameterSeparators,
     std::wstring& ApplicationName,
     std::map<std::wstring, std::wstring>& OptionsAndParameters,
     std::wstring& UnresolvedCommandLine);

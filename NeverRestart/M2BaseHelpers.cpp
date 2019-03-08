@@ -15,7 +15,6 @@
 #include "M2BaseHelpers.h"
 
 #include <string>
-#include <string_view>
 
 /**
  * Write formatted data to a string.
@@ -89,7 +88,7 @@ ULONGLONG M2GetTickCount()
  * @param UTF8String The UTF-8 string you want to convert.
  * @return A converted UTF-16 string.
  */
-std::wstring M2MakeUTF16String(const std::string_view& UTF8String)
+std::wstring M2MakeUTF16String(const std::string& UTF8String)
 {
     std::wstring UTF16String;
 
@@ -97,7 +96,7 @@ std::wstring M2MakeUTF16String(const std::string_view& UTF8String)
         CP_UTF8,
         0,
         UTF8String.data(),
-        static_cast<int>(UTF8String.size()),
+        (int)UTF8String.size(),
         nullptr,
         0);
     if (UTF16StringLength > 0)
@@ -107,7 +106,7 @@ std::wstring M2MakeUTF16String(const std::string_view& UTF8String)
             CP_UTF8,
             0,
             UTF8String.data(),
-            static_cast<int>(UTF8String.size()),
+            (int)UTF8String.size(),
             &UTF16String[0],
             UTF16StringLength);
     }
@@ -121,7 +120,7 @@ std::wstring M2MakeUTF16String(const std::string_view& UTF8String)
  * @param UTF16String The UTF-16 string you want to convert.
  * @return A converted UTF-8 string.
  */
-std::string M2MakeUTF8String(const std::wstring_view& UTF16String)
+std::string M2MakeUTF8String(const std::wstring& UTF16String)
 {
     std::string UTF8String;
 
@@ -129,7 +128,7 @@ std::string M2MakeUTF8String(const std::wstring_view& UTF16String)
         CP_UTF8,
         0,
         UTF16String.data(),
-        static_cast<int>(UTF16String.size()),
+        (int)UTF16String.size(),
         nullptr,
         0,
         nullptr,
@@ -141,7 +140,7 @@ std::string M2MakeUTF8String(const std::wstring_view& UTF16String)
             CP_UTF8,
             0,
             UTF16String.data(),
-            static_cast<int>(UTF16String.size()),
+            (int)UTF16String.size(),
             &UTF8String[0],
             UTF8StringLength,
             nullptr,
@@ -161,7 +160,7 @@ std::string M2MakeUTF8String(const std::wstring_view& UTF16String)
  */
 HRESULT M2GetLastError()
 {
-    return __HRESULT_FROM_WIN32(GetLastError());
+    return HRESULT_FROM_WIN32(GetLastError());
 }
 
 /**
@@ -187,8 +186,7 @@ DWORD M2GetLastErrorKnownFailedCall()
  */
 HRESULT M2GetLastHRESULTErrorKnownFailedCall()
 {
-    DWORD LastError = M2GetLastErrorKnownFailedCall();
-    return __HRESULT_FROM_WIN32(LastError);
+    return HRESULT_FROM_WIN32(M2GetLastErrorKnownFailedCall());
 }
 
 /**
@@ -243,7 +241,7 @@ std::wstring M2GetCurrentProcessModulePath()
  *         arguments.
  */
 std::vector<std::wstring> M2SpiltCommandLine(
-    const std::wstring_view& CommandLine)
+    const std::wstring& CommandLine)
 {
     // Initialize the SplitArguments.
     std::vector<std::wstring> SplitArguments;
@@ -256,7 +254,7 @@ std::vector<std::wstring> M2SpiltCommandLine(
     Buffer.reserve(CommandLine.size());
 
     /* first scan the program name, copy it, and count the bytes */
-    wchar_t* p = const_cast<wchar_t*>(CommandLine.data());
+    wchar_t* p = const_cast<wchar_t*>(CommandLine.c_str());
 
     // A quoted program name is handled here. The handling is much simpler than
     // for other arguments. Basically, whatever lies between the leading
@@ -388,9 +386,9 @@ std::vector<std::wstring> M2SpiltCommandLine(
  * @param UnresolvedCommandLine The unresolved command line.
  */
 void M2SpiltCommandLineEx(
-    const std::wstring_view& CommandLine,
-    const std::vector<std::wstring_view>& OptionPrefixes,
-    const std::vector<std::wstring_view>& OptionParameterSeparators,
+    const std::wstring& CommandLine,
+    const std::vector<std::wstring>& OptionPrefixes,
+    const std::vector<std::wstring>& OptionParameterSeparators,
     std::wstring& ApplicationName,
     std::map<std::wstring, std::wstring>& OptionsAndParameters,
     std::wstring& UnresolvedCommandLine)
@@ -421,7 +419,7 @@ void M2SpiltCommandLineEx(
             {
                 if (0 == _wcsnicmp(
                     SplitArgument.c_str(),
-                    OptionPrefix.data(),
+                    OptionPrefix.c_str(),
                     OptionPrefix.size()))
                 {
                     IsOption = true;
@@ -445,7 +443,7 @@ void M2SpiltCommandLineEx(
                 {
                     wchar_t* Result = wcsstr(
                         OptionStart,
-                        OptionParameterSeparator.data());
+                        OptionParameterSeparator.c_str());
                     if (nullptr == Result)
                     {
                         continue;
@@ -467,7 +465,7 @@ void M2SpiltCommandLineEx(
                 // We use "(arg_size - 1)" to ensure that the program path
                 // without quotes can also correctly parse.
                 wchar_t* search_start =
-                    const_cast<wchar_t*>(CommandLine.data()) + (arg_size - 1);
+                    const_cast<wchar_t*>(CommandLine.c_str()) + (arg_size - 1);
 
                 // Get the unresolved command line. Search for the beginning of
                 // the first parameter delimiter called space and exclude the
