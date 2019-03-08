@@ -6,7 +6,7 @@
 
 #include "M2BaseHelpers.h"
 
-LRESULT CALLBACK NeverRestartWindowProc(
+LRESULT CALLBACK M2BlockingShutdownWindowProc(
     _In_ HWND hWnd,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,
@@ -29,66 +29,57 @@ LRESULT CALLBACK NeverRestartWindowProc(
     return 0;
 }
 
-HRESULT NeverRestartCreateBlockingWindow(
+HRESULT M2CreateBlockingShutdownWindow(
     _Out_ HWND* BlockingWindowHandle,
+    _In_ LPCWSTR WindowName,
     _In_ LPCWSTR ReasonText)
 {
-  
-    bool Succeed = false;
-
-    do
+    // Step 1: Creating the Window.
+    *BlockingWindowHandle = CreateWindowExW(
+        0,
+        L"Static",
+        WindowName,
+        WS_OVERLAPPED,
+        0,
+        0,
+        0,
+        0,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr);
+    if (*BlockingWindowHandle)
     {
-        // Step 1: Creating the Window.
-        *BlockingWindowHandle = CreateWindowExW(
-            0,
-            L"Static",
-            L"NeverRestart",
-            WS_OVERLAPPED,
-            0,
-            0,
-            0,
-            0,
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr);
-        if (!*BlockingWindowHandle)
-            break;
-
         // Step 2: Setting the window procedure. 
-        if (!SetWindowLongPtrW(
+        if (SetWindowLongPtrW(
             *BlockingWindowHandle,
             GWL_WNDPROC,
-            reinterpret_cast<LONG>(NeverRestartWindowProc)))
-            break;
+            reinterpret_cast<LONG>(M2BlockingShutdownWindowProc)))
+        {
+            // Step 3: We provide a reason for the shutdown prevention.
+            if (ShutdownBlockReasonCreate(
+                *BlockingWindowHandle,
+                ReasonText))
+            {
+                // Step 4: We elevate the program to be asked as soon as 
+                // possible to inhibit shutdown.
+                if (SetProcessShutdownParameters(
+                    0x4FF,
+                    SHUTDOWN_NORETRY))
+                {
+                    // Succeed.
+                    return S_OK;
+                }
+            }
+        }
 
-        // Step 3: We provide a reason for the shutdown prevention.
-        if (!ShutdownBlockReasonCreate(
-            *BlockingWindowHandle,
-            ReasonText))
-            break;
-
-        // Step 4: We elevate the program to be asked as soon as possible 
-        // to inhibit shutdown.
-        if (!SetProcessShutdownParameters(
-            0x4FF,
-            SHUTDOWN_NORETRY))
-            break;
-
-        Succeed = true;
-
-    } while (false);
-
-    if (!Succeed)
-    {
+        // Cleanup if failed
         DestroyWindow(*BlockingWindowHandle);
         *BlockingWindowHandle = nullptr;
-
-        M2GetLastHRESULTErrorKnownFailedCall();
     }
 
-    return S_OK;
-
+    // Failed return.
+    return M2GetLastHRESULTErrorKnownFailedCall();
 }
 
 
@@ -100,8 +91,9 @@ int WINAPI wWinMain(
 {
     HWND BlockingWindowHandle = nullptr;
 
-    if (FAILED(NeverRestartCreateBlockingWindow(
+    if (FAILED(M2CreateBlockingShutdownWindow(
         &BlockingWindowHandle,
+        L"NeverRestart",
         L"永不重启侦测到了一个你不希望的重启或关机。"/*L"NeverRestart detects an unwanted restart or shutdown."*/)))
     {
         MessageBoxW(
